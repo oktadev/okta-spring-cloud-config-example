@@ -1,4 +1,4 @@
-package com.okta.dev.springcloudconfig;
+package com.okta.dev.servicetwo;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -16,9 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 
 @SpringBootApplication
-public class ServiceOneApplication {
+public class ServiceTwoApplication {
+
     public static void main(String[] args) {
-        SpringApplication.run(ServiceOneApplication.class, args);
+        SpringApplication.run(ServiceTwoApplication.class, args);
     }
 
     @Order(1)
@@ -27,20 +28,20 @@ public class ServiceOneApplication {
         @Override
         public void configure(HttpSecurity http) throws Exception {
             http
-                    .csrf().disable()
-                    .antMatcher("/actuator/*")
-                    .authorizeRequests()
-                    .antMatchers("/actuator/*").authenticated()
-                    .and()
-                    .httpBasic();
+                .csrf().disable()
+                .antMatcher("/actuator/*")
+                .authorizeRequests()
+                .antMatchers("/actuator/*").authenticated()
+                .and()
+                .httpBasic();
         }
 
         @Override
         protected void configure(AuthenticationManagerBuilder auth) throws Exception {
             auth.inMemoryAuthentication()
-                    .withUser("serviceOneUser")
-                    .password("{noop}serviceOnePassword")
-                    .roles("USER");
+                .withUser("serviceTwoUser")
+                .password("{noop}serviceTwoPassword")
+                .roles("USER");
         }
     }
 
@@ -50,10 +51,10 @@ public class ServiceOneApplication {
         @Override
         public void configure(HttpSecurity http) throws Exception {
             http
-                    .authorizeRequests()
-                    .anyRequest().authenticated()
-                    .and()
-                    .oauth2Login();
+                .authorizeRequests()
+                .anyRequest().authenticated()
+                .and()
+                .oauth2Login();
         }
     }
 
