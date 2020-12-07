@@ -18,58 +18,58 @@ import java.security.Principal;
 @SpringBootApplication
 public class ServiceOneApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ServiceOneApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ServiceOneApplication.class, args);
+    }
 
-	@Order(1)
-	@Configuration
-	public static class ActuatorSecurityConfig extends WebSecurityConfigurerAdapter {
-		@Override
-		public void configure(HttpSecurity http) throws Exception {
-			http
-				.csrf().disable()
-				.antMatcher("/actuator/*")
-				.authorizeRequests()
-				.antMatchers("/actuator/*").authenticated()
-				.and()
-				.httpBasic();
-		}
+    @Order(1)
+    @Configuration
+    public static class ActuatorSecurityConfig extends WebSecurityConfigurerAdapter {
+        @Override
+        public void configure(HttpSecurity http) throws Exception {
+            http
+                .csrf().disable()
+                .antMatcher("/actuator/*")
+                .authorizeRequests()
+                .antMatchers("/actuator/*").authenticated()
+                .and()
+                .httpBasic();
+        }
 
-		@Override
-		protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-			auth.inMemoryAuthentication()
-				.withUser("serviceOneUser")
-				.password("{noop}serviceOnePassword")
-				.roles("USER");
-		}
-	}
+        @Override
+        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+            auth.inMemoryAuthentication()
+                .withUser("serviceOneUser")
+                .password("{noop}serviceOnePassword")
+                .roles("USER");
+        }
+    }
 
-	@Order(2)
-	@Configuration
-	public static class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
+    @Order(2)
+    @Configuration
+    public static class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
-		@Override
-		public void configure(HttpSecurity http) throws Exception {
-			http
-				.authorizeRequests()
-				.anyRequest().authenticated()
-				.and()
-				.oauth2Login();
-		}
-	}
+        @Override
+        public void configure(HttpSecurity http) throws Exception {
+            http
+                .authorizeRequests()
+                .anyRequest().authenticated()
+                .and()
+                .oauth2Login();
+        }
+    }
 
-	@RefreshScope
-	@RestController
-	@RequestMapping("/secure")
-	public static class SecureController {
+    @RefreshScope
+    @RestController
+    @RequestMapping("/secure")
+    public static class SecureController {
 
-		@Value("${hello.message}")
-		private String helloMessage;
+        @Value("${hello.message}")
+        private String helloMessage;
 
-		@GetMapping
-		public String secure(Principal principal) {
-			return helloMessage;
-		}
-	}
+        @GetMapping
+        public String secure(Principal principal) {
+            return helloMessage;
+        }
+    }
 }
