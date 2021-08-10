@@ -7,10 +7,6 @@
 
 Spring Boot is a very popular framework for creating microservices quickly and easily.
 
-It’s easy to create several, dozens, or even hundreds of microservices for your project with Spring Boot. One speed bump with this approach, however, is the configuration of all these services. Typically in Spring Boot, configuration is bundled with the application. This works fine for small, monolithic applications, but when dealing with dozens of services and potentially hundreds of configuration files, managing all of them can be a headache.
-
-This is where Spring Cloud Config, a framework integrated with Spring Boot, is useful. A dedicated “config server” is brought online from which each microservice can download its configuration data. This dramatically simplifies the management of many microservices by centralizing their configuration in one location and provides the ability to “live” refresh a microservice’s configuration without redeploying the service. As a bonus, Spring Cloud Config provides out-of-the-box support for storing/reading configuration from Git repositories, giving you a full audit history of changes in one location.
-
 In this demo, I'll show you how to:
 
 - Create a central configuration server using Spring Boot.
@@ -29,27 +25,14 @@ toc::[]
 
 You can create a Spring Cloud Config Server using Spring Initialzr.
 
-. Click https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.4.0.RELEASE&packaging=jar&jvmVersion=11&groupId=com.okta.dev&artifactId=config-server&name=cloud-config-server&description=Configuration%20Server&packageName=com.okta.dev.config-server&dependencies=security,web,cloud-config-server[this link] or go to https://start.spring.io[start.spring.io] and select the following options in your browser:
-+
-- **Project**: `Maven Project`
-- **Language**: `Java`
-- **Spring Boot**: `2.4.0`
-+
-Under **Project Metadata**, set the values to the following:
+. Click https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.5.3&packaging=jar&jvmVersion=11&groupId=com.okta.dev&artifactId=config-server&name=cloud-config-server&description=Configuration%20Server&packageName=com.okta.dev.configserver&dependencies=security,web,cloud-config-server[this link] or go to https://start.spring.io[start.spring.io] and select the following options in your browser:
 +
 - **Group**: `com.okta.dev`
 - **Artifact**: `config-server`
 - **Name**: `cloud-config-server`
 - **Description**: Configuration Server
 - **Package**: `com.okta.dev.configserver`
-- **Packaging**: `Jar`
-- **Java**: `11`
-+
-Select the following dependencies:
-+
-- Spring Security
-- Spring Web
-- Config Server
+- **Dependencies**: `Spring Security`, `Spring Web`, `Config Server`
 
 . Click **Generate** to download the project files. Unzip the file and import the project files into your favorite IDE.
 
@@ -58,12 +41,10 @@ Select the following dependencies:
 [source,properties]
 ----
 server.port=8888
-spring.cloud.config.server.native.search-locations=/path/to/config/folder
+spring.cloud.config.server.native.search-locations=file://${user.home}/config
 spring.security.user.name=configUser
 spring.security.user.password=configPass
 ----
-+
-TIP: The property `spring.cloud.config.server.native.search-locations` is the location where you store your configuration files. **Replace the value with a folder on your filesystem where these files will be saved.** For example, `file://${user.home}/config`.
 
 . Open your application's main class and add the `@EnableConfigServer` annotation:
 +
@@ -82,13 +63,13 @@ public class CloudConfigServerApplication { ... }
 
   okta apps create
 
-. Select **Other**. Then, change the Redirect URI to:
+. Select **Web** > **Other**. Then, change the Redirect URI to:
 +
 ----
 http://localhost:8001/login/oauth2/code/okta,http://localhost:8002/login/oauth2/code/okta
 ----
 
-. Select the defaults for the Logout Redirect URI.
+. Accept the defaults for the Logout Redirect URIs.
 
 == Configure Security for Your Microservices Architecture
 
@@ -168,7 +149,6 @@ Enter your config server's project directory and run the application:
 
 [source,shell]
 ----
-cd /path/to/config-server
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=native
 ----
 
@@ -176,35 +156,19 @@ The `native` profile tells the application to serve configuration files from the
 
 == Create Spring Boot Microservice #1
 
-Open the https://start.spring.io/[Spring Initializr] or https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.4.0.RELEASE&packaging=jar&jvmVersion=11&groupId=com.okta.dev&artifactId=service-one&name=service-one&description=Microservice%20One&packageName=com.okta.dev.service-one&dependencies=web,okta,cloud-config-client,actuator[click here].
-
-Select the following options:
-
-- **Project**: `Maven Project`
-- **Language**: `Java`
-- **Spring Boot**: `2.4.0`
-
-Under **Project Metadata** fill in the following information:
-
+. Open the https://start.spring.io/[Spring Initializr] and select the following options or https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.5.3&packaging=jar&jvmVersion=11&groupId=com.okta.dev&artifactId=service-one&name=service-one&description=Microservice%20One&packageName=com.okta.dev.service-one&dependencies=web,okta,cloud-config-client,actuator[click here].
++
 - **Group**: `com.okta.dev`
 - **Artifact**: `service-one`
 - **Name**: `service-one`
 - **Description**: Microservice One
 - **Package**: `com.okta.dev.service-one`
-- **Packaging**: `Jar`
-- **Java**: `11`
+- **Dependencies**: `Spring Web`, `Okta`, `Config Client`, `Actuator`
 
-Select the following dependencies:
+. Click **Generate** and import the project files into your favorite IDE.
 
-- Spring Web
-- Okta
-- Config Client
-- Spring Boot Actuator
-
-Click **Generate** and import the project files into your favorite IDE.
-
-Update `src/main/resources/application.properties` with the following key-value pairs:
-
+. Update `src/main/resources/application.properties` with the following key-value pairs:
++
 [source,properties]
 ----
 spring.application.name=service-one
@@ -214,8 +178,8 @@ spring.cloud.config.username=configUser
 spring.cloud.config.password=configPass
 ----
 
-To secure your microservice using Okta and OAuth 2.0, open your microservice's main class and add the following configuration class:
-
+. To secure your microservice using Okta and OAuth 2.0, open your microservice's main class and add the following configuration class:
++
 [source,java]
 ----
 @Configuration
@@ -232,8 +196,8 @@ public static class ApplicationSecurityConfig extends WebSecurityConfigurerAdapt
 }
 ----
 
-Add a basic REST controller, which will respond with a message defined in your service's configuration file (hosted on the config server):
-
+. Add a basic REST controller, which will respond with a message defined in your service's configuration file (hosted on the config server):
++
 [source,java]
 ----
 @RestController
@@ -250,32 +214,32 @@ public static class SecureController {
 }
 ----
 
-Enter your config server's project directory and run the application with `profile1` set:
-
+. Enter your config server's project directory and run the application with `profile1` set:
++
 [source,shell]
 ----
 cd /path/to/service-one
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=profile1
 ----
 
-Open a browser and navigate to `http://localhost:8001/secure`. After successfully authenticating, you should see the following message:
-
+. Open a browser and navigate to `http://localhost:8001/secure`. After successfully authenticating, you should see the following message:
++
 [source,text]
 ----
 Service One Profile One
 ----
-
++
 This is the same message defined in the `service-one-profile.yml` file you created earlier. Neat!
 
-Next, switch your microservice's active profile to `profile2` and observe a different message. Stop your application and re-run with `profile2` active:
-
+. Switch your microservice's active profile to `profile2` and observe a different message. Stop your application and re-run with `profile2` active:
++
 [source,shell]
 ----
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=profile2
 ----
 
-Navigate to `http://localhost:8001/secure`. You should now see the message defined in `service-one-profile2.yml`:
-
+. Navigate to `http://localhost:8001/secure`. You should now see the message defined in `service-one-profile2.yml`:
++
 [source,text]
 ----
 Service One Profile Two
@@ -283,8 +247,10 @@ Service One Profile Two
 
 == Refresh the Configuration in Your Spring Cloud Config Server
 
-Spring Cloud Config provides the ability to "live" reload your service's configuration without stopping or re-deploying. To demonstrate this, first, stop `service-one` and add the `@RefreshScope` annotation to your REST controller:
+Spring Cloud Config provides the ability to "live" reload your service's configuration without stopping or re-deploying.
 
+. Stop `service-one` and add the `@RefreshScope` annotation to your REST controller:
++
 [source,java]
 ----
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -293,24 +259,15 @@ import org.springframework.cloud.context.config.annotation.RefreshScope;
 @RefreshScope
 @RestController
 @RequestMapping("/secure")
-public static class SecureController {
-
-    @Value("${hello.message}")
-    private String helloMessage;
-
-    @GetMapping
-    public String secure(Principal principal) {
-        return helloMessage;
-    }
-}
+public static class SecureController { ... }
 ----
-
++
 When this annotation is applied to a Spring component (i.e., a `@Component`, `@Service`, `@RestController`, etc.), the component is re-created when a configuration refresh occurs, in this case giving an updated value for `${hello.message}`.
-
++
 You can refresh an application's configuration by including the **Spring Boot Actuator** dependency, exposing the `/actuator/refresh` endpoint, and sending an empty `POST` request.
 
-The **Spring Boot Actuator** has already been included in your microservice's dependencies. Edit your configuration files to expose the `refresh` endpoint:
-
+. The **Spring Boot Actuator** has already been included in your microservice's dependencies. Edit your configuration files to expose the `refresh` endpoint:
++
 .service-one.yml
 [source,yaml]
 ----
@@ -329,7 +286,7 @@ management:
       exposure:
         include: "refresh"
 ----
-
++
 .service-two.yml
 [source,yaml]
 ----
@@ -349,8 +306,8 @@ management:
         include: "refresh"
 ----
 
-Add a security class inside your main application class to secure the endpoint with basic authentication:
-
+. Add a security class inside your main application class to secure the endpoint with basic authentication:
++
 [source,java]
 ----
 @Configuration
@@ -375,11 +332,11 @@ public static class ActuatorSecurityConfig extends WebSecurityConfigurerAdapter 
     }
 }
 ----
-
++
 Almost finished! Since your application is already authenticated with OIDC using Okta, you need to make these two security configuration classes play nicely with each other.
 
-Add the `@Order` annotations to both so `ActuatorSecurityConfig` takes precedence. This will allow you to refresh the configuration via `/actuator/refresh` without triggering the OAuth 2.0 flow.
-
+. Add the `@Order` annotations to both so `ActuatorSecurityConfig` takes precedence. This will allow you to refresh the configuration via `/actuator/refresh` without triggering the OAuth 2.0 flow.
++
 [source,java]
 ----
 @Order(1)
@@ -391,17 +348,17 @@ public static class ActuatorSecurityConfig extends WebSecurityConfigurerAdapter 
 public static class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter { ... }
 ----
 
-Start your application using `profile1`:
-
+. Start your application using `profile1`:
++
 [source,shell]
 ----
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=profile1
 ----
 
-Navigate to `http://localhost:8001/secure` and note the message still says `Service One Profile One`.
+. Navigate to `http://localhost:8001/secure` and note the message still says `Service One Profile One`.
 
-Open your configuration file at `/path/to/config/folder/service-one-profile1.yml` and edit the message:
-
+. Open your configuration file at `/path/to/config/folder/service-one-profile1.yml` and edit the message:
++
 .service-one-profile1.yml
 [source,yaml]
 ----
@@ -409,48 +366,32 @@ hello:
   message: "Things have changed"
 ----
 
-Save the file and refresh the page at `http://localhost:8001/secure`. Note that the message has not changed yet and still says `Service One Profile One`. To have your application receive the updated configuration, you must call the `/actuator/refresh` endpoint:
-
+. Save the file and refresh the page at `http://localhost:8001/secure`. Note that the message has not changed yet and still says `Service One Profile One`. To have your application receive the updated configuration, you must call the `/actuator/refresh` endpoint:
++
 [source,shell]
 ----
 curl -u serviceOneUser:serviceOnePassword -X POST http://localhost:8001/actuator/refresh
 ----
 
-Refresh the page at `http://localhost:8001/secure`, and you should see the updated message!
+. Refresh the page at `http://localhost:8001/secure`, and you should see the updated message!
 
 == Create Spring Boot Microservice #2
 
 Create a second Spring Boot application, acting as a second microservice, which will also have its configuration provided by your configuration server.
 
-Open the https://start.spring.io/[Spring Initializr] or click https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.4.0.RELEASE&packaging=jar&jvmVersion=11&groupId=com.okta.dev&artifactId=service-two&name=service-two&description=Microservice%20Two&packageName=com.okta.dev.service-two&dependencies=web,okta,cloud-config-client,actuator[this link].
-
-Select the following options:
-
-- **Project**: `Maven Project`
-- **Language**: `Java`
-- **Spring Boot**: `2.4.0`
-
-Under **Project Metadata** fill in the following information:
-
+. Use the https://start.spring.io/[Spring Initializr] with the following options or click https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.5.3&packaging=jar&jvmVersion=11&groupId=com.okta.dev&artifactId=service-two&name=service-two&description=Microservice%20Two&packageName=com.okta.dev.service-two&dependencies=web,okta,cloud-config-client,actuator[this link].
++
 - **Group**: `com.okta.dev`
 - **Artifact**: `service-two`
 - **Name**: `service-two`
 - **Description**: Microservice Two
 - **Package**: `com.okta.dev.service-two`
-- **Packaging**: `Jar`
-- **Java**: `11`
+- **Dependencies**: `Spring Web`, `Okta`, `Config Client`, `Actuator`
 
-Select the following dependencies (the same list as `service-one`):
+. Click **Generate** and import the project files into your favorite IDE.
 
-- Spring Web
-- Okta
-- Config Client
-- Spring Boot Actuator
-
-Click **Generate** and import the project files into your favorite IDE.
-
-Update `src/main/resources/application.properties` with the following properties:
-
+. Update `src/main/resources/application.properties` with the following properties:
++
 [source,properties]
 ----
 spring.application.name=service-two
@@ -459,11 +400,11 @@ spring.cloud.config.uri=http://localhost:8888
 spring.cloud.config.username=configUser
 spring.cloud.config.password=configPass
 ----
-
++
 Note the value for `spring.application.name` is different.
 
-Make the same changes to your main application class as above:
-
+. Make the same changes to your main application class as above:
++
 [source,java]
 ----
 public class ServiceTwoApplication {
@@ -502,19 +443,19 @@ public class ServiceTwoApplication {
     }
 }
 ----
++
+Notice the different credentials for the in-memory user: `serviceTwoUser / serviceTwoPassword`.
 
-Note the different credentials for the in-memory user: `serviceTwoUser / serviceTwoPassword`.
-
-Run the application:
-
+. Run the application:
++
 [source,shell]
 ----
 cd /path/to/service-two
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=profile1
 ----
 
-Navigate to `http://localhost:8002/secure` and authenticate with Okta. When you are redirected back to your application you will see the welcome message for `service-two`:
-
+. Navigate to `http://localhost:8002/secure` and authenticate with Okta. When you are redirected back to your application you will see the welcome message for `service-two`:
++
 [source,text]
 ----
 Service Two Profile One
